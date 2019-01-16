@@ -131,7 +131,8 @@ private:
 			std::cout << "Done calculating average in " << diff.count() << " seconds\n";
 			std::cout << "There is " << dataBaseIn.size() << " values for indoor\n";
 			std::cout << "There is " << dataBaseOut.size() << " values for outdoor\n";
-			std::cout << "There is vlaues for " << average.size() << " days\n\n";
+			std::cout << "There is values for " << average.size() << " days\n\n";
+			std::cout << "there is days between " << average[0].S_datum << " and " << average[average.size() - 1].S_datum << std::endl;
 
 		}
 
@@ -636,7 +637,7 @@ public:
 		std::cout << "meteorological Winter not found\n" << std::endl;
 		return false;
 	};
-
+	void printrange() { std::cout << "there is days between " << average[0].S_datum << " and " << average[average.size() - 1].S_datum << std::endl; };
 
 };
 
@@ -698,7 +699,7 @@ public:
 
 	void bigList()
 	{
-		std::cout << "welcome to the weathe processing app:\n"
+		std::cout << "welcome to the weather processing app:\n"
 			<< ">>1 - To show all values for a chosen date.\n"
 			<< ">>2 - To sort by ...\n"
 			<< ">>3 - Date of meteorological fall.\n"
@@ -709,6 +710,7 @@ public:
 		switch (getUserInput())
 		{
 		case E_dataForchosenDate:
+			weather.printrange();
 			std::cout << "Enter the chosen date as, YYYYMMDD : ";
 			weather.search(getUserInput());
 			userChoice = E_bigList;
