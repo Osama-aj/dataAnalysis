@@ -1,5 +1,6 @@
+///////////       Osama Alajam
 
-
+////all include
 #include "pch.h"
 #include <iostream>
 #include<string>
@@ -10,19 +11,22 @@
 #include <algorithm>
 
 
-//using namespace std;
+//using namespace std; //not using it anymore
+
+//just a enum to make things clearly
 enum sorting
 {
-	E_byHotestToColdestIn = 1, E_byHotestToColdestOut, E_byDryestToHumidIn, E_byDryestToHumidOut, E_bymogelRiskInne,
+	E_byHotestToColdestICountingSort = 0, E_byHotestToColdestIn = 1, E_byHotestToColdestOut, E_byDryestToHumidIn, E_byDryestToHumidOut, E_bymogelRiskInne,
 	E_bymogelRiskUte, E_bytempDiff
 
 };
 
+//The main class
 class MyClass
 {
-
+	//in private there are two structz, three vectorz and and copule oof methds.
 private:
-
+	//struct for all data with time, just reading the file and save things in two vectorz
 	struct oneDayDataFull
 	{
 		long int S_datum;
@@ -32,6 +36,7 @@ private:
 		oneDayDataFull(long int datuM, float tempIN, float tempOuT, float humidityIN, float humidityOuT)
 			:S_datum(datuM), S_tempIn(tempIN), S_tempOut(tempOuT), S_humidityIn(humidityIN), S_humidityOut(humidityOuT) {};*/
 	};
+	//struct for data after calculating average 
 	struct oneDayData
 	{
 		long int S_datum, S_time;
@@ -41,10 +46,8 @@ private:
 
 	};
 
-	std::vector<oneDayData> dataBaseIn, dataBaseOut;
-	std::vector<oneDayDataFull> average;
-
-
+	std::vector<oneDayData> dataBaseIn, dataBaseOut; //with all information 
+	std::vector<oneDayDataFull> average; // just average
 
 
 
@@ -53,28 +56,78 @@ private:
 	//////////////////////////////////////
 	//////////////////////////////////////
 
+	//counting sort ... copid from internet with some changes to fit a vector 
+	void countSort(std::vector<oneDayDataFull>& arr)
+	{
+		for (auto& elem : arr)
+			elem.S_tempIn = elem.S_tempIn * 100;
+
+
+		float maxx{ 0 };
+		float minn{ 0 };
+		for (size_t i = 0; i < arr.size(); i++)
+		{
+			maxx = std::max(maxx, arr[i].S_tempIn);
+			minn = std::min(minn, arr[i].S_tempIn);
+		}
+		//maxx = (int)maxx;
+		//minn = (int)minn;
+		float range = maxx - minn + 1;
+
+		std::vector<oneDayDataFull>  output(arr.size());
+		std::vector<float> count(range);
+		for (int i = 0; i < arr.size(); i++)
+			count[arr[i].S_tempIn - minn]++;
+
+		for (int i = 1; i < count.size(); i++)
+			count[i] += count[i - 1];
+
+		for (int i = arr.size() - 1; i >= 0; i--)
+		{
+			output[count[arr[i].S_tempIn - minn] - 1] = arr[i];
+			count[arr[i].S_tempIn - minn]--;
+		}
+
+		for (int i = 0; i < arr.size(); i++)
+			arr[i].S_tempIn = output[i].S_tempIn;
+
+		for (int i = 0; i < arr.size(); i++)
+		{
+			arr[i] = output[i];
+			arr[i].S_tempIn = arr[i].S_tempIn / 100;
+		}
+	}
+
+
+
+	//////////////////////////////////////
+	//////////////////////////////////////
+	//////////////////////////////////////
+	//////////////////////////////////////
+
+	//a method which calculate average  
 	void toAverage(bool statistics)
 	{
-		oneDayDataFull toPush;
+		oneDayDataFull toPush; //just an object to push to the vector 
 		int counter{ 0 }, counter2{ 0 };
 		float tempInSum{ 0 }, tempOutSum{ 0 }, humiInSum{ 0 }, humiOutSum{ 0 };
 
-		std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+		std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now(); //calculating time 
 
 
-		//oneDayDataFull toPush;
-		///////for-loop for inside
+		///////for-loop to read and save all inside information
 		for (unsigned int i = 0; i < (dataBaseIn.size() - 1); i++)
 		{
 			tempInSum = humiInSum = 0;
 			counter = 0;
-			while (i < (dataBaseIn.size() - 1) && (dataBaseIn[i].S_datum == dataBaseIn[i + 1].S_datum)) {
+			while (i < (dataBaseIn.size() - 1) && (dataBaseIn[i].S_datum == dataBaseIn[i + 1].S_datum)) { //if it's the same day and inside the vectors range
 				tempInSum += dataBaseIn[i].S_temp;
 				humiInSum += dataBaseIn[i].S_humidity;
 				counter++;
 				i++;
 			}
-			tempInSum += dataBaseIn[i].S_temp;
+			//adding the last values for the day 
+			tempInSum = tempInSum + dataBaseIn[i].S_temp;
 			humiInSum += dataBaseIn[i].S_humidity;
 			counter++;
 
@@ -99,7 +152,7 @@ private:
 		//////////
 		//////////
 
-		///////for-loop for outside
+		///////the same for-loop but to read and save all outsides information
 		for (unsigned int i = 0; i < (dataBaseOut.size() - 1); i++)
 		{
 			tempOutSum = humiOutSum = 0;
@@ -124,7 +177,7 @@ private:
 
 			counter2++;
 		}
-		if (statistics)
+		if (statistics) //if the statistics are important
 		{
 			////calculating time
 			std::chrono::duration<long double> diff = std::chrono::system_clock::now() - start;
@@ -150,15 +203,14 @@ private:
 
 
 	//compare funktionz
-
-	struct byDryestToHumidIn
+	struct byDryestToHumidIn  //the compare funktion for humidity indoor 
 	{
 		inline bool operator() (const oneDayDataFull& struct1, const oneDayDataFull& struct2)
 		{
 			return (struct1.S_humidityIn < struct2.S_humidityIn);
 		}
 	};
-	struct byDryestToHumidOut
+	struct byDryestToHumidOut //the compare funktion for humidity outdoor
 	{
 		inline bool operator() (const oneDayDataFull& struct1, const oneDayDataFull& struct2)
 		{
@@ -171,6 +223,7 @@ private:
 	/////////////////////////
 	/////////////////////////
 
+	//binary search using recursive function 
 	int binarySearch(std::vector<oneDayDataFull> toSearchIn, int first, int last, long int tofind)
 	{
 		int  middle = (int)round((first + last) / 2);
@@ -199,7 +252,8 @@ private:
 	//////////////////////////////////////
 	//////////////////////////////////////
 
-	void typeToAFile(std::vector<oneDayDataFull> toType, std::string fileOut, bool coutIt = true)
+	//listing the three first and last values and typing the vector on a file 
+	void typeToAFile(std::vector<oneDayDataFull> toType, std::string fileOut, bool coutIt = true)/*coutIt:if you want to see the three first and last values */
 	{
 		std::string datumStr;
 		std::ofstream outFil(fileOut);
@@ -207,9 +261,9 @@ private:
 
 		if (outFil.is_open())
 		{
-			for (auto& elem : toType)
+			for (auto& elem : toType) //for-each loop
 			{
-				auto i = &elem - &toType[0];
+				auto i = &elem - &toType[0]; //because i need to use i
 
 				if (((i >= 0 && i <= 2) || (i >= toType.size() - 3)) && coutIt)
 				{
@@ -238,6 +292,7 @@ private:
 						<< round(elem.S_moldRiskOut * 100) / 100 << "\n";
 				}
 
+				//this three lines are to add '-' to the date 
 				datumStr = std::to_string(elem.S_datum);
 				datumStr.insert(4, "-");
 				datumStr.insert(7, "-");
@@ -251,7 +306,7 @@ private:
 					<< round(elem.S_moldRiskOut * 100) / 100 << "\n";
 			}
 
-			//old way of for-loop
+			//old way of for-loop .... the way with iterator is faster, as i understood
 			//for (size_t i = 0; i < toType.size(); i++)
 			//{
 			//	datumStr = std::to_string(toType[i].S_datum);
@@ -276,6 +331,7 @@ private:
 	//////////////////////////////////////////
 	////////////////merge-temp-up/////////////
 	/////////////////////////////////////////
+	//merge-sort fuction for temperature indoor
 	void merge_sort_by_temp_IN(int low, int high, std::vector<oneDayDataFull>& xxx)
 	{
 
@@ -283,9 +339,9 @@ private:
 		if (low < high)
 		{
 			mid = low + (high - low) / 2; //This avoids overflow when low, high are too large
-			merge_sort_by_temp_IN(low, mid, xxx);
-			merge_sort_by_temp_IN(mid + 1, high, xxx);
-			merge_temp_IN(low, mid, high, xxx);
+			merge_sort_by_temp_IN(low, mid, xxx); //just divide the vector 
+			merge_sort_by_temp_IN(mid + 1, high, xxx); //just divide the vector 
+			merge_temp_IN(low, mid, high, xxx);// merge
 		}
 	}
 	void merge_temp_IN(int low, int mid, int high, std::vector<oneDayDataFull>& xx)
@@ -302,12 +358,12 @@ private:
 		{
 			if (xx[h].S_tempIn >= xx[j].S_tempIn)
 			{
-				b.at(i).S_tempIn = xx[h].S_tempIn;
+				b.at(i) = xx[h];
 				h++;
 			}
 			else
 			{
-				b.at(i).S_tempIn = xx[j].S_tempIn;
+				b.at(i) = xx[j];
 				j++;
 			}
 			i++;
@@ -316,7 +372,7 @@ private:
 		{
 			for (k = j; k <= high; k++)
 			{
-				b.at(i).S_tempIn = xx[k].S_tempIn;
+				b.at(i) = xx[k];
 
 				i++;
 			}
@@ -325,11 +381,11 @@ private:
 		{
 			for (k = h; k <= mid; k++)
 			{
-				b.at(i).S_tempIn = xx[k].S_tempIn;
+				b.at(i) = xx[k];
 				i++;
 			}
 		}
-		for (k = low; k <= high; k++) 			xx.at(k).S_tempIn = b[k].S_tempIn;
+		for (k = low; k <= high; k++) 			xx.at(k) = b[k];
 	}
 
 
@@ -338,6 +394,8 @@ private:
 	//////////////////////////////////////////
 	////////////////merge-temp-down///////////
 	/////////////////////////////////////////
+
+	//merge-sort fuction for temperature outdoor
 	void merge_sort_by_temp_OUT(int low, int high, std::vector<oneDayDataFull>& xxx)
 	{
 
@@ -364,12 +422,12 @@ private:
 		{
 			if (xx[h].S_tempOut >= xx[j].S_tempOut)
 			{
-				b.at(i).S_tempOut = xx[h].S_tempOut;
+				b.at(i) = xx[h];
 				h++;
 			}
 			else
 			{
-				b.at(i).S_tempOut = xx[j].S_tempOut;
+				b.at(i) = xx[j];
 				j++;
 			}
 			i++;
@@ -378,7 +436,7 @@ private:
 		{
 			for (k = j; k <= high; k++)
 			{
-				b.at(i).S_tempOut = xx[k].S_tempOut;
+				b.at(i) = xx[k];
 
 				i++;
 			}
@@ -387,11 +445,11 @@ private:
 		{
 			for (k = h; k <= mid; k++)
 			{
-				b.at(i).S_tempOut = xx[k].S_tempOut;
+				b.at(i) = xx[k];
 				i++;
 			}
 		}
-		for (k = low; k <= high; k++) 			xx.at(k).S_tempOut = b[k].S_tempOut;
+		for (k = low; k <= high; k++) 			xx.at(k) = b[k];
 	}
 
 
@@ -413,20 +471,19 @@ private:
 
 
 public:
-	//denna metod ska vara en vanligt metod eller konstruktör
+	//this piece of code can be a normal method or a constructor 
 	//void setAll(bool statistics = true)
 	MyClass(bool statistics = true)
 	{
 		/////deleration
-		//oneDayData  dataBaseToPush;
-		std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+		std::chrono::time_point<std::chrono::system_clock> start;//calculating time
 		std::string   tempString;
 		bool inOrOut{ false };
 		long int date, time;
 		float temp, humi;
 		std::string fileIn;
 		bool done{ true };
-		////reading right file
+		////reading a chosen file 
 		std::cout << "Enter the file you want to process >> ";
 		while (done)
 		{
@@ -438,17 +495,18 @@ public:
 				std::cout << "File not found, try again >> ";
 		}
 		////opening the file
+		start = std::chrono::system_clock::now();
 		std::ifstream myfilein(fileIn);
 		if (myfilein.is_open())
 		{
-			while (!myfilein.eof())
+			while (!myfilein.eof())//untill the end of the file 
 			{
-				std::getline(myfilein, tempString, ' ');
+				std::getline(myfilein, tempString, ' ');//from the beginning to the space 
 				tempString.erase(4, 1);
 				tempString.erase(6, 1);
 				date = stol(tempString);
 
-				std::getline(myfilein, tempString, ',');
+				std::getline(myfilein, tempString, ','); //to the comma 
 				tempString.erase(2, 1);
 				tempString.erase(4, 1);
 				time = stol(tempString);
@@ -461,14 +519,14 @@ public:
 					inOrOut = true;
 
 				std::getline(myfilein, tempString, ',');
-				temp = stof(tempString);
+				temp = stof(tempString);//convert to float
 
 				std::getline(myfilein, tempString);
-				humi = stof(tempString);
+				humi = stof(tempString);//convert to float
 
-				oneDayData  dataBaseToPush(date, time, temp, humi);
+				oneDayData  dataBaseToPush(date, time, temp, humi);//gathering information in one variable to push it 
 
-				if (inOrOut)
+				if (inOrOut) //pushing it back to one of the vectorz
 					dataBaseIn.push_back(dataBaseToPush);
 				else
 					dataBaseOut.push_back(dataBaseToPush);
@@ -479,19 +537,19 @@ public:
 		{
 			std::cout << "Unable to open..." << std::endl;
 		}
-		if (statistics)
+		if (statistics) //if the statistics are important
 		{
 			////calculating time
 			std::chrono::duration<long double> diff = std::chrono::system_clock::now() - start;
 			std::cout << "Done loading the file in " << diff.count() << " seconds\n";
 		}
-		//calling toAverage method 
+		//calling toAverage method because it is important to have the average values 
 		toAverage(statistics);
 
 	};
 
 
-	void sort(int sortBy)
+	void sort(int sortBy)//sort function which include all used sort functions
 	{
 		std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
 		std::vector<oneDayDataFull> tempV(average);
@@ -499,36 +557,42 @@ public:
 
 		switch (sortBy)
 		{
+		case E_byHotestToColdestICountingSort:
+			countSort(tempV); //counting sort ->code
+			diff = std::chrono::system_clock::now() - start; //calculate time
+			std::cout << "sorting by temperature by count Sort took " << diff.count() << " seconds\n\n"; 
+			typeToAFile(tempV, "TEMP-hTOcIN-BYcountSort.txt"); //listing and typing in a file
+			break;
 		case E_byHotestToColdestIn:
-			//std::sort(tempV.begin(), tempV.end(), [](const oneDayDataFull& i, const oneDayDataFull& j) {return (i.S_tempIn > j.S_tempIn); });
-			merge_sort_by_temp_IN(0, tempV.size() - 1, tempV);
+			merge_sort_by_temp_IN(0, tempV.size() - 1, tempV); //merge ->code
 			diff = std::chrono::system_clock::now() - start;
 			std::cout << "sorting by temperature by merge-sort took " << diff.count() << " seconds\n\n";
-			typeToAFile(tempV, "TEMP-hTOcIN-BYsort.txt");
+			typeToAFile(tempV, "TEMP-hTOcIN-BYmergeSort.txt");
 			break;
 
 		case E_byHotestToColdestOut:
-			merge_sort_by_temp_OUT(0, tempV.size() - 1, tempV);
+			merge_sort_by_temp_OUT(0, tempV.size() - 1, tempV); //merge ->code
 			diff = std::chrono::system_clock::now() - start;
 			std::cout << "sorting by temperature by merge-sort took " << diff.count() << " seconds\n\n";
-			typeToAFile(tempV, "TEMP-hTOcOUT-BYsort.txt");
+			typeToAFile(tempV, "TEMP-hTOcOUT-BYmergeSort.txt");
 			break;
 
 		case E_byDryestToHumidIn:
-			std::stable_sort(tempV.begin(), tempV.end(), byDryestToHumidIn());
+			std::stable_sort(tempV.begin(), tempV.end(), byDryestToHumidIn());//stable_sort -> compare function
 			diff = std::chrono::system_clock::now() - start;
 			std::cout << "sorting by humidity by std::stable_sort took " << diff.count() << " seconds\n\n";
-			typeToAFile(tempV, "HUMI-dTOhIN-BYsort.txt");
+			typeToAFile(tempV, "HUMI-dTOhIN-BYstableSort.txt");
 			break;
 
 		case E_byDryestToHumidOut:
-			std::stable_sort(tempV.begin(), tempV.end(), byDryestToHumidOut());
+			std::stable_sort(tempV.begin(), tempV.end(), byDryestToHumidOut());//stable_sort -> compare function
 			diff = std::chrono::system_clock::now() - start;
 			std::cout << "sorting by humidity by std::stable_sort took " << diff.count() << " seconds\n\n";
-			typeToAFile(tempV, "HUMI-dTOhOUT-BYsort.txt");
+			typeToAFile(tempV, "HUMI-dTOhOUT-BYstableSort.txt");
 			break;
 
 		case E_bymogelRiskInne:
+			//std::sort -> lambda
 			std::sort(tempV.begin(), tempV.end(), [](const oneDayDataFull& i, const oneDayDataFull& j) {return i.S_moldRiskIn < j.S_moldRiskIn; });
 			diff = std::chrono::system_clock::now() - start;
 			std::cout << "sorting by mold-risk by std::sort took " << diff.count() << " seconds\n\n";
@@ -536,6 +600,7 @@ public:
 			break;
 
 		case E_bymogelRiskUte:
+			//std::sort -> lambda
 			std::sort(tempV.begin(), tempV.end(), [](const oneDayDataFull& i, const oneDayDataFull& j) {return i.S_moldRiskOut < j.S_moldRiskOut; });
 			diff = std::chrono::system_clock::now() - start;
 			std::cout << "sorting by mold-risk by std::sort took " << diff.count() << " seconds\n\n";
@@ -543,6 +608,7 @@ public:
 			break;
 
 		case E_bytempDiff:
+			//std::sort -> lambda
 			std::sort(tempV.begin(), tempV.end(), [](const oneDayDataFull& i, const oneDayDataFull& j) {return i.S_tempIn - i.S_tempOut > j.S_tempIn - j.S_tempOut; });
 			diff = std::chrono::system_clock::now() - start;
 			std::cout << "sorting by std::sort took " << diff.count() << " seconds\n\n";
@@ -558,7 +624,7 @@ public:
 
 
 
-	void search(long int dateToFind)
+	void search(long int dateToFind) //search method ... using binary search
 	{
 		std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
 		std::chrono::duration<long double> diff;
@@ -566,7 +632,7 @@ public:
 		diff = std::chrono::system_clock::now() - start;
 		if (found == -1)
 			std::cout << "NOT found but took " << diff.count() << "seconds.\n\n";
-		else
+		else //if found -> listing all information in that day
 		{
 			std::cout << "found and took " << diff.count() << "seconds.\n";
 			std::cout << " date \t\t tempIn\ttempOut\thumiIN\thumiOut\tmoldIn\tmoldOut\n";
@@ -575,6 +641,7 @@ public:
 				<< round(average[found].S_tempOut * 100) / 100 << "\t"
 				<< round(average[found].S_humidityIn * 100) / 100 << "\t"
 				<< round(average[found].S_humidityOut * 100) / 100 << "\t"
+				//this peice for typing the level of the risk instead of the index
 				<< (((round((average[found].S_moldRiskIn * 100) / 100)) <= 0) ? "no risk"
 					: ((round((average[found].S_moldRiskIn * 100) / 100)) <= 5) ? "low risk"
 					: ((round((average[found].S_moldRiskIn * 100) / 100)) <= 10) ? "medium risk"
@@ -589,12 +656,18 @@ public:
 		}
 	};
 
-
+	//to find the meteorological Autumn
 	bool meteorologicalAutumn()
 	{
 		int counter{ 0 };
-		//for (auto it = average.begin(); it !=average.end(); it++)
-		for (size_t i = 0; i < average.size(); i++)
+		size_t start;
+		for (size_t i = 0; i < average.size(); i++)// to get the index of the first day in August
+			if (std::to_string(average[i].S_datum)[5] == '8')
+			{
+				start = i;
+				break;
+			}
+		for (size_t i = start; i < average.size(); i++) 
 		{
 
 			if (average[i].S_tempOut >= 0 && average[i].S_tempOut <= 10)
@@ -613,12 +686,18 @@ public:
 		std::cout << "meteorological Autumn not found\n" << std::endl;
 		return false;
 	};
-
+	//to find the meteorological winter
 	bool meteorologicalWinter()
 	{
 		int counter{ 0 };
-		//for (auto it = average.begin(); it !=average.end(); it++)
+		size_t start;
 		for (size_t i = 0; i < average.size(); i++)
+			if (std::to_string(average[i].S_datum)[5] == '8')
+			{
+				start = i;
+				break;
+			}		
+		for (size_t i = start; i < average.size(); i++)
 		{
 
 			if (average[i].S_tempOut <= 0)
@@ -634,9 +713,11 @@ public:
 				return true;
 			}
 		}
-		std::cout << "meteorological Winter not found\n" << std::endl;
+		std::cout << "Winter Is Coming, but not yet\n" << std::endl;
 		return false;
 	};
+
+	//a method to show the range of the days 
 	void printrange() { std::cout << "there is days between " << average[0].S_datum << " and " << average[average.size() - 1].S_datum << std::endl; };
 
 };
@@ -648,6 +729,7 @@ public:
 /////////////////////////////////////
 /////////////////////////////////////
 /////////////////////////////////////
+// a class for the menus
 class Lists
 {
 
@@ -769,12 +851,17 @@ public:
 	void sortlistIndoor()
 	{
 		std::cout << "You want to sort by ...\n"
+			<< ">>0 - Temperature by count sort\n"
 			<< ">>1 - Temperature\n"
 			<< ">>2 - Humidity\n"
 			<< ">>3 - Mold risk\n"
 			<< ">>4 - Back\n";
 		switch (getUserInput())
 		{
+		case 0:
+			weather.sort(0);
+			userChoice = E_bigList;
+			break;
 		case E_temperature:
 			weather.sort(E_byHotestToColdestIn);
 			userChoice = E_bigList;
@@ -849,7 +936,7 @@ public:
 
 };
 
-
+//the main :)
 int main()
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
